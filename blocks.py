@@ -4,12 +4,12 @@ import numpy as np
 
 
 class S2Block(nn.Module):
-    def __init__(self, n_channels, feature_map_size, kernel_size, padding='same'):
+    def __init__(self, n_channels, avg_pool_kernel, kernel_size, padding='same'):
         super().__init__()
 
         pad = kernel_size // 2 if padding == 'same' else 0
 
-        self.pool = nn.AdaptiveAvgPool2d(feature_map_size)
+        self.pool = nn.AvgPool2d(avg_pool_kernel)
         self.dconv = nn.Conv2d(n_channels, n_channels, kernel_size=kernel_size, padding=pad, groups=n_channels, bias=False)
         self.bn1 = nn.BatchNorm2d(n_channels)
         self.pwconv = nn.Conv2d(n_channels, n_channels, kernel_size=1, bias=False)
@@ -30,7 +30,7 @@ class S2Block(nn.Module):
 
 class S2Module(nn.Module):
 
-    def __init__(self, n_channels, groups=1):
+    def __init__(self, n_channels, block_1_args, block_2_args, groups=1):
         super().__init__()
 
         self.n_channels = n_channels
@@ -40,18 +40,23 @@ class S2Module(nn.Module):
         self.act = nn.ReLU()
 
         '''TODO: make feature_map_size and kernel_size for S2Block as S2Module arguments'''
-        self.s2_block_1 = S2Block(out_channels, 4, 3)
-        self.s2_block_2 = S2Block(out_channels, 4, 3)
+        self.s2_block_1 = S2Block(out_channels, **block_1_args)
+        self.s2_block_2 = S2Block(out_channels, **block_2_args)
         self.out_act = nn.PReLU()
 
     def forward(self, input):
+
+        '''Shuffle channels'''
         permuted_channel_idxs = torch.randperm(self.n_channels)
         x = input[:, permuted_channel_idxs, :, :]
+
         x = self.pwconv(x)
         x = self.bn(x)
         x = self.act(x)
+
         x1 = self.s2_block_1(x)
         x2 = self.s2_block_2(x)
+
         x = torch.cat([x1, x2], dim=1)
         x = torch.add(x, input)
         x = self.out_act(x)
