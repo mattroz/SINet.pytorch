@@ -1,0 +1,3 @@
+[submodule "Squeeze-And-Excitation-Blocks"]
+	path = Squeeze-And-Excitation-Blocks
+	url = https://github.com/mattroz/Squeeze-And-Excitation-Blocks.git
