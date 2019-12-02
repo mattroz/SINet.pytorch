@@ -120,29 +120,23 @@ class SINetEncoder(nn.Module):
 
     def forward(self, input):
         x = self.conv2d(input)
-        print(x.shape)
         x = self.act(x)
         x = self.dconv_se_1(x)
-        print(x.shape)
 
-        res = x
-        for i in range(2):
-            res = self.s2_modules[i](res)
+        x_skip = self.s2_modules[0](x)
+        res = self.s2_modules[1](x_skip)
 
         x = torch.cat([x, res], dim=1)
-        print(x.shape)
         x = self.dconv_se_2(x)
-        print(x.shape)
 
         res = x
         for i in range(2, len(self.s2_modules)):
             res = self.s2_modules[i](res)
 
         x = torch.cat([x, res], dim=1)
-        print(x.shape)
         x = self.act(self.pwconv(x))
 
-        return x
+        return x, x_skip
 
 
 
@@ -184,17 +178,3 @@ class SINetDecoder(nn.Module):
         x = self.conv3(x)
 
         return x
-
-
-
-
-class SINet(nn.Module):
-
-    def __init__(self):
-        super().__init__()
-
-    def get_encoder(self):
-        pass
-
-    def get_decoder(self):
-        pass
