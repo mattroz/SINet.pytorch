@@ -163,7 +163,7 @@ class SINetDecoder(nn.Module):
         x = self.bn1(x)
         x = self.act(x)
 
-        inf_block_map = torch.max(self.softmax(x), dim=1).values
+        inf_block_map = torch.max(self.softmax(x), dim=1, keepdim=True).values
         inf_block_branch = self.inf_block_conv(encoder_feature_map)
         inf_block_branch = self.inf_block_bn(inf_block_branch)
         inf_block_branch = torch.mul(inf_block_branch, inf_block_map)
